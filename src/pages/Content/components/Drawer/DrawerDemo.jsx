@@ -173,26 +173,44 @@ export default (props) => {
       key: 'real_name',
     },
     {
+      width: 80,
       title: '电话',
       dataIndex: 'user_phone',
       key: 'user_phone',
     },
     {
+      width: 160,
       title: '收货地址',
       dataIndex: 'user_address',
       key: 'user_address',
     },
     {
-      title: '一键发货',
+      title: '快递单号',
       render: (items) => {
-        return (
-          <Button
-            onClick={() => {
-              if (
-                items._status === 2 &&
-                items.status_name.status_name === '未发货' &&
-                !items.refund.length
-              ) {
+        return workRef.current.map((items2) => {
+          if (items.order_id === items2['订单号'].replace('\n', '').trim()) {
+            return (
+              <div>
+                {String(items2['快递'])}
+                {String(items2['快递单号'])}
+              </div>
+            );
+          }
+        });
+      },
+    },
+    {
+      title: '一键发货',
+      width: 80,
+      render: (items) => {
+        if (
+          items._status === 2 &&
+          items.status_name.status_name === '未发货' &&
+          !items.refund.length
+        ) {
+          return (
+            <Button
+              onClick={() => {
                 workRef.current.map((items2) => {
                   if (
                     items.order_id === items2['订单号'].replace('\n', '').trim()
@@ -200,12 +218,14 @@ export default (props) => {
                     saveSendOutGoods(items, items2);
                   }
                 });
-              }
-            }}
-          >
-            一键发货
-          </Button>
-        );
+              }}
+            >
+              一键发货
+            </Button>
+          );
+        } else {
+          return <Button disabled>发货成功</Button>;
+        }
       },
     },
   ];
@@ -213,19 +233,21 @@ export default (props) => {
   const saveSendOutGoods = async (data1, data2) => {
     const wl = logistics.find((items) => items.value === data2['快递']);
 
-    const body = {
-      delivery_code: wl.code,
-      delivery_id: String(data2['快递单号']),
-      delivery_name: data2['快递'],
-      expressTemp: [],
+    let body = {
+      type: '1',
       express_record_type: '1',
+      delivery_name: data2['快递'],
+      delivery_id: String(data2['快递单号']),
       express_temp_id: '',
-      fictitious_content: '',
-      sh_delivery: '',
-      to_addr: '',
       to_name: '',
       to_tel: '',
-      type: '1',
+      to_addr: '',
+      sh_delivery: '',
+      fictitious_content: '',
+      id: '',
+      to_add: '',
+      export_open: false,
+      delivery_code: wl.code,
     };
 
     const response = await fetch(
@@ -234,6 +256,7 @@ export default (props) => {
         method: 'PUT',
         headers: {
           'Authori-Zation': `Bearer ${cookie.get('token')}`,
+          'Content-Type': 'application/json',
         },
         mode: 'cors',
         credentials: 'include',
@@ -246,9 +269,10 @@ export default (props) => {
     }
     if (response.status === 200) {
       message.success(response.msg);
-      updateData(data1.order_id);
+      // updateData(data1.order_id);
     } else {
       message.error(response.msg);
+      updateData(data1.order_id);
     }
   };
 
@@ -261,16 +285,11 @@ export default (props) => {
         },
       }
     ).then((res) => res.json());
-    if (response.status === 110003) {
-      setVisible(true);
-      return;
-    }
-
     setData((data) => {
       return data.map((items) => {
-        if (items.id === response.data.data.id) {
+        if (items.id === response.data.data[0].id) {
           return {
-            ...response.data.data,
+            ...response.data.data[0],
           };
         } else {
           return items;
