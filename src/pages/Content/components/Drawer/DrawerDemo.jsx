@@ -269,10 +269,9 @@ export default (props) => {
     }
     if (response.status === 200) {
       message.success(response.msg);
-      // updateData(data1.order_id);
+      updateData(data1.order_id);
     } else {
       message.error(response.msg);
-      updateData(data1.order_id);
     }
   };
 
@@ -285,10 +284,12 @@ export default (props) => {
         },
       }
     ).then((res) => res.json());
+
     setData((data) => {
       return data.map((items) => {
         if (items.id === response.data.data[0].id) {
           return {
+            ...items,
             ...response.data.data[0],
           };
         } else {
