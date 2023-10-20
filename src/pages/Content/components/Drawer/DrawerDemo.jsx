@@ -13,6 +13,9 @@ import {
 import cookie from 'cookiejs';
 import * as XLSX from 'xlsx';
 
+// const Origin = 'http://debo.gonghongzc.com';
+const Origin = window.location.origin;
+
 export default (props) => {
   const [open, setOpen] = useState(false);
   const workRef = useRef();
@@ -21,13 +24,12 @@ export default (props) => {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    getLogistics();
-
     window.addEventListener(
       'message',
       (e) => {
         if (e.data.source !== 'react-devtools-content-script') {
           if (e.data.key === 'showDrawer') {
+            getLogistics();
             setOpen(!open);
           }
         }
@@ -36,10 +38,14 @@ export default (props) => {
     );
   }, []);
 
+  useEffect(() => {
+    getLogistics();
+  }, []);
+
   const getLogistics = async () => {
     //获取物流信息
     const response = await fetch(
-      'http://debo.gonghongzc.com/adminapi/order/express_list?status=',
+      `${Origin}/adminapi/order/express_list?status=`,
       {
         headers: {
           'Authori-Zation': `Bearer ${cookie.get('token')}`,
@@ -63,6 +69,7 @@ export default (props) => {
         for (const sheet in workbook.Sheets) {
           if (workbook.Sheets.hasOwnProperty(sheet)) {
             let result = XLSX.utils.sheet_to_json(workbook.Sheets[sheet]);
+            console.log(result);
             workRef.current = result;
             getOrderList(result);
           }
@@ -81,7 +88,7 @@ export default (props) => {
 
   const fetchData = async (id) => {
     const response = await fetch(
-      `http://debo.gonghongzc.com/adminapi/order/list?page=1&limit=10&status=&pay_type=&data=&real_name=${id}&field_key=all&type=`,
+      `${Origin}/adminapi/order/list?page=1&limit=10&status=&pay_type=&data=&real_name=${id}&field_key=all&type=`,
       {
         headers: {
           'Authori-Zation': `Bearer ${cookie.get('token')}`,
@@ -125,7 +132,7 @@ export default (props) => {
       title: '商品信息',
       dataIndex: '_info',
       key: '_info',
-      width: 500,
+      width: 300,
       render: (info) => {
         return Object.keys(info).map((items, index) => {
           return (
@@ -188,10 +195,10 @@ export default (props) => {
       title: '快递单号',
       render: (items) => {
         return workRef.current.map((items2) => {
-          if (items.order_id === items2['订单号'].replace('\n', '').trim()) {
+          if (items.order_id === items2['订单号']) {
             return (
               <div>
-                {String(items2['快递'])}
+                {String(items2['快递'])} <br />
                 {String(items2['快递单号'])}
               </div>
             );
@@ -231,6 +238,11 @@ export default (props) => {
   ];
 
   const saveSendOutGoods = async (data1, data2) => {
+    if (!data2['快递']) {
+      message.error('请检查表格是否正常');
+      return;
+    }
+
     const wl = logistics.find((items) => items.value === data2['快递']);
 
     let body = {
@@ -251,7 +263,7 @@ export default (props) => {
     };
 
     const response = await fetch(
-      `http://debo.gonghongzc.com/adminapi/order/delivery/${data1.id}`,
+      `${Origin}/adminapi/order/delivery/${data1.id}`,
       {
         method: 'PUT',
         headers: {
@@ -277,7 +289,7 @@ export default (props) => {
 
   const updateData = async (id) => {
     const response = await fetch(
-      `http://debo.gonghongzc.com/adminapi/order/list?page=1&limit=10&status=&pay_type=&data=&real_name=${id}&field_key=all&type=`,
+      `${Origin}/adminapi/order/list?page=1&limit=10&status=&pay_type=&data=&real_name=${id}&field_key=all&type=`,
       {
         headers: {
           'Authori-Zation': `Bearer ${cookie.get('token')}`,

@@ -1,7 +1,10 @@
 import ContentScripts from './ContentScripts';
 import { create, backgroundClient, ChromeMessage } from '../../chrome';
 
-if (window.location.origin === 'http://debo.gonghongzc.com') {
+
+const originArr = ['http://ytcx.laiqiankj.cn', 'http://debo.gonghongzc.com']
+
+if (originArr.includes(window.location.origin)) {
   new ContentScripts();
 }
 
