@@ -75,9 +75,6 @@ export default () => {
                 id: items['页面URL'].includes('http')
                   ? getParameterByName('id', items['页面URL'])
                   : items['页面URL'],
-                pv: items['浏览量(PV)'],
-                uv: items['访客数(UV)'],
-                logout: items['退出页次数'],
               };
             });
             setData(newVal);
