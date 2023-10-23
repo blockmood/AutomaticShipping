@@ -1,19 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Drawer,
-  Button,
-  Form,
-  Modal,
-  Table,
-  Upload,
-  UploadProps,
-  message,
-  Input,
-} from 'antd';
+import { Drawer, Button, Table, Upload, message, Tabs } from 'antd';
 import cookie from 'cookiejs';
 import * as XLSX from 'xlsx';
+import TongJi from '../Fahuo/index';
 
-// const Origin = 'http://debo.gonghongzc.com';
 const Origin = window.location.origin;
 
 export default (props) => {
@@ -21,7 +11,6 @@ export default (props) => {
   const workRef = useRef();
   const [data, setData] = useState([]);
   const [logistics, setLogistics] = useState([]);
-  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     window.addEventListener(
@@ -193,6 +182,7 @@ export default (props) => {
     },
     {
       title: '快递单号',
+      width: 120,
       render: (items) => {
         return workRef.current.map((items2) => {
           if (items.order_id === items2['订单号']) {
@@ -311,6 +301,35 @@ export default (props) => {
     });
   };
 
+  const items = [
+    {
+      key: '1',
+      label: '一件发货',
+      children: (
+        <>
+          <div style={{ display: 'flex' }}>
+            <Upload {...updateProps} fileList={[]}>
+              <Button type="primary">上传excel</Button>
+            </Upload>
+          </div>
+          <div style={{ marginBottom: 20 }}></div>
+          <Table
+            size="small"
+            dataSource={data}
+            columns={columns}
+            rowKey="id"
+            pagination={false}
+          ></Table>
+        </>
+      ),
+    },
+    {
+      key: '2',
+      label: '数据统计',
+      children: <TongJi />,
+    },
+  ];
+
   return (
     <Drawer
       width={1500}
@@ -326,18 +345,7 @@ export default (props) => {
       }}
       destroyOnClose={true}
     >
-      <div style={{ display: 'flex' }}>
-        <Upload {...updateProps} fileList={[]}>
-          <Button type="primary">上传excel</Button>
-        </Upload>
-      </div>
-      <div style={{ marginBottom: 20 }}></div>
-      <Table
-        dataSource={data}
-        columns={columns}
-        rowKey="id"
-        pagination={false}
-      ></Table>
+      <Tabs defaultActiveKey="1" items={items} />
     </Drawer>
   );
 };
