@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Table, Upload, message, DatePicker, InputNumber } from 'antd';
 import cookie from 'cookiejs';
 import * as XLSX from 'xlsx';
@@ -10,6 +10,7 @@ export default () => {
   const [data, setData] = useState([]);
   const [count, setCount] = useState(2000);
   const [loading, setLoading] = useState(false);
+  const useRefData = useRef();
   const timeRef = useRef({
     start: dayjs().format('YYYY/MM/DD'),
     end: dayjs().format('YYYY/MM/DD'),
@@ -35,18 +36,65 @@ export default () => {
         setLoading(false);
       });
     if (response.status === 200) {
-      //拼接表格数据
-      // const ct = data.reduce((val, item) => {
-      //   let res = response.data.find((i) => i.product_id == item.id);
-      //   return res
-      //     ? val.concat({
-      //         ...item,
-      //         ...res,
-      //       })
-      //     : null;
-      // }, []);
-
+      //启动定时器
+      useRefData.current = response.data;
       setData(response.data);
+      setLoading(false);
+    }
+  };
+
+  const getInterVal = () => {
+    setLoading(true);
+    let timmer = setInterval(() => {
+      if (useRefData.current?.length > 5) {
+        let newVal = useRefData.current.splice(0, 5);
+        newVal.map((items) => {
+          getProductDetail(items.product_id);
+        });
+      } else if (useRefData.current?.length > 1) {
+        let newVal = useRefData.current.splice(0, useRefData.current.length);
+        newVal.map((items) => {
+          getProductDetail(items.product_id);
+        });
+      } else {
+        setLoading(false);
+        clearInterval(timmer);
+      }
+    }, 1000);
+  };
+
+  const getProductDetail = async (id) => {
+    const response = await fetch(
+      `${window.location.origin}/adminapi/product/product/${id}`,
+      {
+        headers: {
+          'Authori-Zation': `Bearer ${cookie.get('token')}`,
+        },
+      }
+    )
+      .then((res) => res.json())
+      .catch((err) => {
+        message.error('请求量数据太大，请调整', err);
+        setLoading(false);
+      });
+
+    if (response.status == 200) {
+      setData((data) => {
+        return data.map((items) => {
+          if (items.product_id == response.data.productInfo.id) {
+            return {
+              ...items,
+              sp_price: response.data.productInfo.price,
+              cost: response.data.productInfo.cost,
+              href: `http://debo.gonghongzc.com/pages/goods_details/index?id=${items.product_id}`,
+            };
+          } else {
+            return items;
+          }
+        });
+      });
+    } else {
+      message.error('请求失败');
       setLoading(false);
     }
   };
@@ -102,6 +150,9 @@ export default () => {
     const rowXlsxData = [
       '商品ID',
       '商品名称',
+      '商品链接',
+      '成本',
+      '售价',
       '浏览量',
       '访客数',
       '下单数',
@@ -116,6 +167,9 @@ export default () => {
       return [
         items.product_id,
         items.store_name,
+        items.href,
+        items.cost,
+        items.sp_price,
         items.visit,
         items.user,
         items.orders,
@@ -162,6 +216,30 @@ export default () => {
       title: '商品名称',
       dataIndex: 'store_name',
       key: 'store_name',
+      render: (_, d) => {
+        return (
+          <div>
+            <p>{_}</p>
+            <p>
+              <a href={d.href} target="_blank">
+                {d.href}
+              </a>
+            </p>
+          </div>
+        );
+      },
+    },
+    {
+      width: 50,
+      title: '成本',
+      dataIndex: 'cost',
+      key: 'cost',
+    },
+    {
+      width: 50,
+      title: '售价',
+      dataIndex: 'sp_price',
+      key: 'sp_price',
     },
     {
       title: '浏览量',
@@ -180,24 +258,32 @@ export default () => {
       title: '下单数',
       dataIndex: 'orders',
       key: 'orders',
+      defaultSortOrder: 'descend',
+      sorter: (a, b) => a.orders - b.orders,
     },
     {
       width: 100,
       title: '支付数',
       dataIndex: 'pay',
       key: 'pay',
+      defaultSortOrder: 'descend',
+      sorter: (a, b) => a.pay - b.pay,
     },
     {
       width: 100,
       title: '支付金额',
       dataIndex: 'price',
       key: 'price',
+      defaultSortOrder: 'descend',
+      sorter: (a, b) => a.price - b.price,
     },
     {
       width: 80,
       title: '收藏数',
       dataIndex: 'collect',
       key: 'collect',
+      defaultSortOrder: 'descend',
+      sorter: (a, b) => a.collect - b.collect,
       render: (_) => {
         return <span>{_}</span>;
       },
@@ -207,17 +293,21 @@ export default () => {
       title: '毛利率',
       dataIndex: 'profit',
       key: 'profit',
+      defaultSortOrder: 'descend',
+      sorter: (a, b) => a.profit - b.profit,
       render: (_) => {
-        return <span>{_ ? parseInt(_ * 100) : ''}%</span>;
+        return <span>{_ ? parseInt(_ * 100) : 0}%</span>;
       },
     },
     {
       width: 100,
       title: '转换率',
       dataIndex: 'changes',
-      key: 'profit',
+      key: 'changes',
+      defaultSortOrder: 'descend',
+      sorter: (a, b) => a.changes - b.changes,
       render: (_) => {
-        return <span>{_ ? parseInt(_ * 100) : ''}%</span>;
+        return <span>{_ ? parseInt(_ * 100) : 0}%</span>;
       },
     },
   ];
@@ -243,6 +333,9 @@ export default () => {
         <Button type="primary" onClick={getProductList}>
           搜索
         </Button>
+        <Button type="primary" onClick={getInterVal} style={{ marginLeft: 10 }}>
+          获取商品信息
+        </Button>
         <Button
           type="primary"
           onClick={exportHandle}
@@ -256,7 +349,7 @@ export default () => {
         size="small"
         dataSource={data}
         columns={columns}
-        rowKey="id"
+        rowKey="product_id"
         pagination={false}
       ></Table>
     </div>
