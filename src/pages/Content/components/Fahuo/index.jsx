@@ -36,17 +36,17 @@ export default () => {
       });
     if (response.status === 200) {
       //拼接表格数据
-      const ct = data.reduce((val, item) => {
-        let res = response.data.find((i) => i.product_id == item.id);
-        return res
-          ? val.concat({
-              ...item,
-              ...res,
-            })
-          : null;
-      }, []);
+      // const ct = data.reduce((val, item) => {
+      //   let res = response.data.find((i) => i.product_id == item.id);
+      //   return res
+      //     ? val.concat({
+      //         ...item,
+      //         ...res,
+      //       })
+      //     : null;
+      // }, []);
 
-      setData(ct);
+      setData(response.data);
       setLoading(false);
     }
   };
@@ -104,9 +104,9 @@ export default () => {
   const columns = [
     {
       title: '商品ID',
-      dataIndex: 'id',
+      dataIndex: 'product_id',
       width: 60,
-      key: 'id',
+      key: 'product_id',
     },
     {
       width: 100,
@@ -175,11 +175,11 @@ export default () => {
 
   return (
     <div>
-      <Upload {...updateProps} fileList={[]}>
+      {/* <Upload {...updateProps} fileList={[]}>
         <Button type="primary" style={{ marginBottom: 10 }}>
           上传文件
         </Button>
-      </Upload>
+      </Upload> */}
       <div style={{ marginBottom: 10 }}>
         <InputNumber
           value={count}
