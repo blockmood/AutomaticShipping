@@ -93,6 +93,55 @@ export default () => {
     };
   };
 
+  const exportHandle = () => {
+    if (!data.length) {
+      message.error('先搜索数据，再导出');
+      return;
+    }
+
+    const rowXlsxData = [
+      '商品ID',
+      '商品名称',
+      '浏览量',
+      '访客数',
+      '下单数',
+      '支付数',
+      '支付金额',
+      '收藏数',
+      '毛利率',
+      '转换率',
+    ];
+
+    let xlsxData = data.map((items) => {
+      return [
+        items.product_id,
+        items.store_name,
+        items.visit,
+        items.user,
+        items.orders,
+        items.pay,
+        items.price,
+        items.collect,
+        `${parseInt(items.profit * 100)}%`,
+        `${parseInt(items.changes * 100)}%`,
+      ];
+    });
+
+    xlsxData.unshift(rowXlsxData);
+
+    // 创建一个工作簿
+    const workbook = XLSX.utils.book_new();
+
+    // 创建一个工作表
+    const worksheet = XLSX.utils.aoa_to_sheet(xlsxData);
+
+    // 将工作表添加到工作簿中
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+
+    // 将工作簿保存为Excel文件
+    XLSX.writeFile(workbook, `exported_data_${dayjs().valueOf()}.xlsx`);
+  };
+
   const updateProps = {
     name: 'file',
     beforeUpload: () => {
@@ -193,6 +242,13 @@ export default () => {
         />
         <Button type="primary" onClick={getProductList}>
           搜索
+        </Button>
+        <Button
+          type="primary"
+          onClick={exportHandle}
+          style={{ marginLeft: 10 }}
+        >
+          导出表格
         </Button>
       </div>
       <Table
