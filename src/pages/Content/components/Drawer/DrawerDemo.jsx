@@ -3,6 +3,7 @@ import { Drawer, Button, Table, Upload, message, Tabs } from 'antd';
 import cookie from 'cookiejs';
 import * as XLSX from 'xlsx';
 import TongJi from '../Fahuo/index';
+import ExportProduct from '../ExportProduct/index';
 
 const Origin = window.location.origin;
 
@@ -327,6 +328,11 @@ export default (props) => {
       key: '2',
       label: '数据统计',
       children: <TongJi />,
+    },
+    {
+      key: '3',
+      label: '导出商品信息',
+      children: <ExportProduct />,
     },
   ];
 
