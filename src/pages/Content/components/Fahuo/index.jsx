@@ -37,8 +37,21 @@ export default () => {
       });
     if (response.status === 200) {
       //启动定时器
-      useRefData.current = response.data;
-      setData(response.data);
+      useRefData.current = response.data.map((items) => {
+        return {
+          ...items,
+          changes_new: ((items.pay / items.user) * 1).toFixed(2),
+        };
+      });
+
+      setData(
+        response.data.map((items) => {
+          return {
+            ...items,
+            changes_new: ((items.pay / items.user) * 1).toFixed(2),
+          };
+        })
+      );
       setLoading(false);
     }
   };
@@ -85,8 +98,14 @@ export default () => {
             return {
               ...items,
               sp_price: response.data.productInfo.price,
-              cost: response.data.productInfo.cost,
+              cost1: response.data.productInfo.cost,
               href: `http://debo.gonghongzc.com/pages/goods_details/index?id=${items.product_id}`,
+              changes_new: ((items.pay / items.user) * 1).toFixed(2),
+              profit_new: (
+                (response.data.productInfo.price -
+                  response.data.productInfo.cost) /
+                response.data.productInfo.price
+              ).toFixed(2),
             };
           } else {
             return items;
@@ -168,7 +187,7 @@ export default () => {
         items.product_id,
         items.store_name,
         items.href,
-        items.cost,
+        items.cost1,
         items.sp_price,
         items.visit,
         items.user,
@@ -176,8 +195,8 @@ export default () => {
         items.pay,
         items.price,
         items.collect,
-        `${parseInt(items.profit * 100)}%`,
-        `${parseInt(items.changes * 100)}%`,
+        `${parseInt(items.profit_new * 100)}%`,
+        `${parseInt(items.changes_new * 100)}%`,
       ];
     });
 
@@ -232,8 +251,8 @@ export default () => {
     {
       width: 50,
       title: '成本',
-      dataIndex: 'cost',
-      key: 'cost',
+      dataIndex: 'cost1',
+      key: 'cost1',
     },
     {
       width: 50,
@@ -291,21 +310,21 @@ export default () => {
     {
       width: 100,
       title: '毛利率',
-      dataIndex: 'profit',
-      key: 'profit',
+      dataIndex: 'profit_new',
+      key: 'profit_new',
       defaultSortOrder: 'descend',
-      sorter: (a, b) => a.profit - b.profit,
+      sorter: (a, b) => a.profit_new - b.profit_new,
       render: (_) => {
         return <span>{_ ? parseInt(_ * 100) : 0}%</span>;
       },
     },
     {
       width: 100,
-      title: '转换率',
-      dataIndex: 'changes',
-      key: 'changes',
+      title: '转化率',
+      dataIndex: 'changes_new',
+      key: 'changes_new',
       defaultSortOrder: 'descend',
-      sorter: (a, b) => a.changes - b.changes,
+      sorter: (a, b) => a.changes_new - b.changes_new,
       render: (_) => {
         return <span>{_ ? parseInt(_ * 100) : 0}%</span>;
       },
@@ -330,13 +349,19 @@ export default () => {
           format={'YYYY-MM-DD'}
           locale={locale}
         />
-        <Button type="primary" onClick={getProductList}>
+        <Button type="primary" onClick={getProductList} disabled={loading}>
           搜索
         </Button>
-        <Button type="primary" onClick={getInterVal} style={{ marginLeft: 10 }}>
+        <Button
+          type="primary"
+          onClick={getInterVal}
+          disabled={loading}
+          style={{ marginLeft: 10 }}
+        >
           获取商品信息
         </Button>
         <Button
+          disabled={loading}
           type="primary"
           onClick={exportHandle}
           style={{ marginLeft: 10 }}
