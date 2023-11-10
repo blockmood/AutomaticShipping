@@ -4,6 +4,7 @@ import cookie from 'cookiejs';
 import * as XLSX from 'xlsx';
 import TongJi from '../Fahuo/index';
 import ExportProduct from '../ExportProduct/index';
+import Yuanjixin from '../Yuanjixin/index';
 
 const Origin = window.location.origin;
 
@@ -333,6 +334,11 @@ export default (props) => {
       key: '3',
       label: '导出商品信息',
       children: <ExportProduct />,
+    },
+    {
+      key: '4',
+      label: '导出京东京造商品信息',
+      children: <Yuanjixin />,
     },
   ];
 

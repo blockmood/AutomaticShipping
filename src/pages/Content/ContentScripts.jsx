@@ -27,12 +27,15 @@ export default class ContentScripts {
     div.style.position = 'fixed';
     div.style.top = '0';
     div.style.left = '0';
-    div.style.zIndex = 999;
+    div.style.zIndex = 9999;
     div.style.borderRadius = '10px';
     document.body.appendChild(div);
 
     div.addEventListener('click', () => {
-      if (!cookie.get('token')) {
+      if (
+        !cookie.get('token') &&
+        window.location.origin !== 'http://admin.yuanjixin.cn'
+      ) {
         message.error('先登录');
         return;
       }
