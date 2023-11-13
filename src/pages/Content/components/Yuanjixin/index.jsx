@@ -68,7 +68,14 @@ export default () => {
     ];
 
     let xlsxData = exportDataRef.current.map((items) => {
-      return [items.id, items.name, items.sn, items.price, items.mktprice];
+      return [
+        items.id,
+        items.name,
+        items.sn,
+        items.price,
+        items.costprice,
+        items.mktprice,
+      ];
     });
 
     xlsxData.unshift(rowXlsxData);
