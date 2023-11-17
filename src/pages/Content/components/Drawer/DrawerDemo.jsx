@@ -344,7 +344,7 @@ export default (props) => {
 
   return (
     <Drawer
-      width={1500}
+      width={800}
       title="一键发货系统"
       getContainer={document.querySelector(
         '#chrome-extension-content-base-element'

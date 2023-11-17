@@ -8,13 +8,14 @@ let flag = true;
 
 export default () => {
   const countRef = useRef(0);
+  const pageRef = useRef(1001);
   const exportDataRef = useRef([]);
   const [loading, setLoading] = useState(false);
 
   const getProductCount = async (page = 1) => {
     const params = new URLSearchParams();
     params.append('page', page);
-    params.append('limit', '30');
+    params.append('limit', '1');
     params.append('isMarketable', true);
     params.append('warn', '');
 
@@ -30,30 +31,51 @@ export default () => {
         body: params,
       }
     ).then((res) => res.json());
-    console.log(response);
     if (response.code == 0) {
-      if (flag) {
-        countRef.current = Math.ceil(response.count / 30);
-        getIntervalFetchData();
-        flag = false;
+      response.data.map((items) => {
+        getProductDetail(items);
+      });
+    }
+  };
+
+  const getProductDetail = async (data) => {
+    const response = await fetch(
+      `${window.location.origin}/Api/CoreCmsGoods/GetDetails`,
+      {
+        headers: {
+          Accept: 'application/json, text/javascript, */*; q=0.01',
+          'Content-Type': 'application/json; charset=UTF-8',
+          ...JSON.parse(window.localStorage.getItem('CoreShop')),
+        },
+        method: 'POST',
+        body: JSON.stringify({
+          id: data.id,
+        }),
+      }
+    ).then((res) => res.json());
+
+    if (response.code === 0) {
+      if (pageRef.current >= 1099) {
+        exportData();
+        return;
       }
 
-      exportDataRef.current.push(...response.data);
+      //遍历数据 拼接到渲染的数据里
+      const listData = response.data.products.map((items, index) => {
+        return {
+          ...items,
+          id: index == 0 ? data.id : '',
+          name: index == 0 ? data.name : '',
+        };
+      });
+      exportDataRef.current.push(...listData);
+      pageRef.current += 1;
+      getProductCount(pageRef.current);
     }
   };
 
   const getIntervalFetchData = () => {
-    var page = 1;
-    var timer = setInterval(() => {
-      if (page >= countRef.current) {
-        clearInterval(timer);
-        //导出表格
-        exportData();
-      } else {
-        page++;
-        getProductCount(page);
-      }
-    }, 1000);
+    getProductCount(pageRef.current);
   };
 
   //导出表格
@@ -61,6 +83,7 @@ export default () => {
     const rowXlsxData = [
       '序列号',
       '商品名称',
+      '规格',
       '商品货号',
       '商品售价',
       '成本价',
@@ -71,6 +94,7 @@ export default () => {
       return [
         items.id,
         items.name,
+        items.spesDesc,
         items.sn,
         items.price,
         items.costprice,
@@ -97,7 +121,7 @@ export default () => {
 
   const exportProduct = async () => {
     setLoading(true);
-    await getProductCount();
+    getIntervalFetchData();
   };
 
   return (
