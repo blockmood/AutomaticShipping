@@ -13,6 +13,7 @@ export default (props) => {
   const workRef = useRef();
   const [data, setData] = useState([]);
   const [logistics, setLogistics] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     window.addEventListener(
@@ -71,10 +72,20 @@ export default (props) => {
     };
   };
 
-  const getOrderList = (data) => {
-    data.map((items) => {
-      fetchData(items['订单号']);
-    });
+  const getOrderList = async (data) => {
+    setLoading(true);
+    try {
+      // 使用 Promise.all 来等待所有异步操作完成
+      await Promise.all(
+        data.map(async (items) => {
+          await fetchData(items['订单号']);
+        })
+      );
+    } catch (error) {
+      // 处理错误，例如在发生异常时设置错误状态
+      console.error('An error occurred:', error);
+    }
+    setLoading(false);
   };
 
   const fetchData = async (id) => {
@@ -91,9 +102,14 @@ export default (props) => {
       return;
     }
 
-    setData((data) => {
-      return [...data, ...response.data.data];
-    });
+    if (
+      response.data.data[0].status_name.status_name === '未发货' &&
+      response.data.data[0]._status === 2
+    ) {
+      setData((data) => {
+        return [...data, ...response.data.data];
+      });
+    }
   };
 
   const updateProps = {
@@ -191,7 +207,11 @@ export default (props) => {
             return (
               <div>
                 {String(items2['快递'])} <br />
-                {String(items2['快递单号'])}
+                {String(items2['快递单号']).includes(',')
+                  ? String(items2['快递单号'])
+                      .split(',')
+                      .map((items) => <p>{items}</p>)
+                  : String(items2['快递单号'])}
               </div>
             );
           }
@@ -321,6 +341,7 @@ export default (props) => {
             columns={columns}
             rowKey="id"
             pagination={false}
+            loading={loading}
           ></Table>
         </>
       ),
@@ -344,7 +365,7 @@ export default (props) => {
 
   return (
     <Drawer
-      width={800}
+      width={1800}
       title="一键发货系统"
       getContainer={document.querySelector(
         '#chrome-extension-content-base-element'
