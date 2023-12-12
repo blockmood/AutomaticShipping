@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import TongJi from '../Fahuo/index';
 import ExportProduct from '../ExportProduct/index';
 import Yuanjixin from '../Yuanjixin/index';
+import DeBo from '../DeBo';
 
 const Origin = window.location.origin;
 
@@ -358,9 +359,14 @@ export default (props) => {
     },
     {
       key: '4',
-      label: '导出京东京造商品信息',
-      children: <Yuanjixin />,
+      label: '小米商品导入德铂',
+      children: <DeBo />,
     },
+    // {
+    //   key: '4',
+    //   label: '导出京东京造商品信息',
+    //   children: <Yuanjixin />,
+    // },
   ];
 
   return (
