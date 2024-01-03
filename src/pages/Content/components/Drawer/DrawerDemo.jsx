@@ -11,10 +11,12 @@ const Origin = window.location.origin;
 
 export default (props) => {
   const [open, setOpen] = useState(false);
-  const workRef = useRef();
+  const workRef = useRef([]);
+  const workBatch = useRef([]);
   const [data, setData] = useState([]);
   const [logistics, setLogistics] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loading1, setLoading1] = useState(false);
 
   useEffect(() => {
     window.addEventListener(
@@ -62,7 +64,6 @@ export default (props) => {
         for (const sheet in workbook.Sheets) {
           if (workbook.Sheets.hasOwnProperty(sheet)) {
             let result = XLSX.utils.sheet_to_json(workbook.Sheets[sheet]);
-            console.log(result);
             workRef.current = result;
             getOrderList(result);
           }
@@ -110,6 +111,7 @@ export default (props) => {
       setData((data) => {
         return [...data, ...response.data.data];
       });
+      workBatch.current.push(response.data.data);
     }
   };
 
@@ -324,6 +326,42 @@ export default (props) => {
     });
   };
 
+  const onBatchshipment = () => {
+    if (!workBatch.current.length) {
+      message.error('先导入数据');
+      return;
+    }
+    setLoading1(true);
+    trakRun();
+  };
+
+  const trakRun = () => {
+    let timer = setTimeout(() => {
+      if (workBatch.current.length > 3) {
+        let Val = workBatch.current.splice(0, 3);
+        Val.map((items) => {
+          workRef.current.map((items2) => {
+            if (items.order_id === items2['订单号'].replace('\n', '').trim()) {
+              saveSendOutGoods(items, items2);
+            }
+          });
+        });
+      } else if (workBatch.current.length > 1) {
+        let Val = workBatch.current.splice(0, workBatch.current.length);
+        Val.map((items) => {
+          workRef.current.map((items2) => {
+            if (items.order_id === items2['订单号'].replace('\n', '').trim()) {
+              saveSendOutGoods(items, items2);
+            }
+          });
+        });
+      } else {
+        setLoading1(false);
+        clearInterval(timer);
+      }
+    }, 1000);
+  };
+
   const items = [
     {
       key: '1',
@@ -334,8 +372,18 @@ export default (props) => {
             <Upload {...updateProps} fileList={[]}>
               <Button type="primary">上传excel</Button>
             </Upload>
+            <Button
+              style={{ marginLeft: 10 }}
+              onClick={onBatchshipment}
+              loading={loading1 || loading}
+            >
+              {loading1 ? '正在批量发货中，不要关闭' : '一键批量发货'}
+            </Button>
           </div>
-          <div style={{ marginBottom: 20 }}></div>
+
+          <div style={{ marginBottom: 20 }}>
+            发货失败的订单，重新导入表格即可看到未发货的订单，自动发货不一定准确,具体情况以实际平台为准
+          </div>
           <Table
             size="small"
             dataSource={data}
@@ -362,16 +410,16 @@ export default (props) => {
       label: '小米商品导入德铂',
       children: <DeBo />,
     },
-    // {
-    //   key: '4',
-    //   label: '导出京东京造商品信息',
-    //   children: <Yuanjixin />,
-    // },
+    {
+      key: '5',
+      label: '导出京东京造商品信息',
+      children: <Yuanjixin />,
+    },
   ];
 
   return (
     <Drawer
-      width={1800}
+      width={1600}
       title="一键发货系统"
       getContainer={document.querySelector(
         '#chrome-extension-content-base-element'
