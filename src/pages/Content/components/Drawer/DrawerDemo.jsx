@@ -111,7 +111,7 @@ export default (props) => {
       setData((data) => {
         return [...data, ...response.data.data];
       });
-      workBatch.current.push(response.data.data);
+      workBatch.current.push(...response.data.data);
     }
   };
 
@@ -154,11 +154,13 @@ export default (props) => {
                 marginBottom: 10,
               }}
             >
-              <img
-                width={60}
-                src={info[items]['cart_info'].productInfo.slider_image[0]}
-              />
-              {info[items]['cart_info'].productInfo.store_name}
+              {info[items]['cart_info'].productInfo?.slider_image?.length ? (
+                <img
+                  width={60}
+                  src={info[items]['cart_info'].productInfo.slider_image[0]}
+                />
+              ) : null}
+              {info[items]['cart_info'].productInfo?.store_name}
             </div>
           );
         });
@@ -253,12 +255,24 @@ export default (props) => {
   ];
 
   const saveSendOutGoods = async (data1, data2) => {
+    // console.log('data1', data1, 'data2', data2);
+
     if (!data2['快递']) {
       message.error('请检查表格是否正常');
       return;
     }
 
-    const wl = logistics.find((items) => items.value === data2['快递']);
+    const wl = logistics.find((items) => items.value === data2['快递']?.trim());
+
+    // console.log('wl', wl);
+
+    if (!wl?.code) {
+      message.error(
+        `${String(data2['快递单号'])} 发货失败， 请检查物流是否正确`,
+        0
+      );
+      return;
+    }
 
     let body = {
       type: '1',
@@ -274,7 +288,7 @@ export default (props) => {
       id: '',
       to_add: '',
       export_open: false,
-      delivery_code: wl.code,
+      delivery_code: wl?.code,
     };
 
     const response = await fetch(
@@ -295,10 +309,10 @@ export default (props) => {
       return;
     }
     if (response.status === 200) {
-      message.success(response.msg);
+      // message.success(response.msg);
       updateData(data1.order_id);
     } else {
-      message.error(response.msg);
+      message.error(`订单ID:${data1.order_id}, ${response.msg}`, 0);
     }
   };
 
@@ -312,9 +326,13 @@ export default (props) => {
       }
     ).then((res) => res.json());
 
+    if (!response.data.data) {
+      return;
+    }
+
     setData((data) => {
       return data.map((items) => {
-        if (items.id === response.data.data[0].id) {
+        if (items.id === response.data.data[0]?.id) {
           return {
             ...items,
             ...response.data.data[0],
@@ -336,7 +354,7 @@ export default (props) => {
   };
 
   const trakRun = () => {
-    let timer = setTimeout(() => {
+    let timer = setInterval(() => {
       if (workBatch.current.length > 3) {
         let Val = workBatch.current.splice(0, 3);
         Val.map((items) => {
@@ -346,7 +364,7 @@ export default (props) => {
             }
           });
         });
-      } else if (workBatch.current.length > 1) {
+      } else if (workBatch.current.length >= 1) {
         let Val = workBatch.current.splice(0, workBatch.current.length);
         Val.map((items) => {
           workRef.current.map((items2) => {
@@ -358,6 +376,7 @@ export default (props) => {
       } else {
         setLoading1(false);
         clearInterval(timer);
+        message.success('批量发货完成!', 0);
       }
     }, 1000);
   };
@@ -388,7 +407,7 @@ export default (props) => {
             size="small"
             dataSource={data}
             columns={columns}
-            rowKey="id"
+            rowKey={(record) => record + Math.random()}
             pagination={false}
             loading={loading}
           ></Table>
